@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">{{ page_title }}</h3>
+          <p class="text-muted">{{ page_subtitle }}</p>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning">
+            <h5>Warning!</h5>
+            <p>You are about to permanently delete the package:</p>
+            <p><strong>{{ package.name }}</strong></p>
+            <p>This action cannot be undone. Are you sure you want to proceed?</p>
+          </div>
+          
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-flex gap-2">
+              <a href="{% url 'dashboard:package_list' %}" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-danger">Yes, Delete Package</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ client.name|default:"Client" }} - Vastu Farms{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ client.name }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              {% if client.logo %}
+                <div class="text-center mb-4">
+                  <img src="{{ client.logo.url }}" alt="{{ client.name }}" class="img-fluid rounded" style="max-height: 200px; object-fit: contain;">
+                </div>
+              {% endif %}
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Name</label>
+                <p class="form-control-plaintext">{{ client.name }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Website</label>
+                <p class="form-control-plaintext">
+                  {% if client.website %}
+                    <a href="{{ client.website }}" target="_blank">{{ client.website }}</a>
+                  {% else %}
+                    <span class="text-muted">No website</span>
+                  {% endif %}
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <p class="form-control-plaintext">
+                  {% if client.is_active %}
+                    <span class="badge bg-success">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Created At</label>
+                <p class="form-control-plaintext">{{ client.created_at }}</p>
+              </div>
+              
+              <div class="mt-4">
+                <a href="{% url 'dashboard:client_list' %}" class="btn btn-secondary">Back to List</a>
+                <a href="{% url 'dashboard:client_edit' client.pk %}" class="btn btn-primary">Edit</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

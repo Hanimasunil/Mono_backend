@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <a href="{% url 'booking_list' %}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> Back to Bookings
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h5>Booking Details</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>Customer Information</h6>
+                  <p><strong>Name:</strong> {{ booking.customer_name }}</p>
+                  <p><strong>Email:</strong> {{ booking.customer_email }}</p>
+                  <p><strong>Phone:</strong> {{ booking.customer_phone }}</p>
+                  <p><strong>Status:</strong> 
+                    <span class="badge bg-{% if booking.status == 'pending' %}warning{% elif booking.status == 'confirmed' %}success{% elif booking.status == 'completed' %}primary{% else %}secondary{% endif %}">
+                      {{ booking.get_status_display }}
+                    </span>
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <h6>Slot Information</h6>
+                  <p><strong>Slot Title:</strong> {{ booking.slot.title }}</p>
+                  <p><strong>Date:</strong> {{ booking.slot.start_time|date:"M d, Y" }}</p>
+                  <p><strong>Time:</strong> {{ booking.slot.start_time|time:"H:i" }} - {{ booking.slot.end_time|time:"H:i" }}</p>
+                  <p><strong>Slot Status:</strong> 
+                    <span class="badge bg-{% if booking.slot.status == 'available' %}success{% elif booking.slot.status == 'booked' %}warning{% else %}secondary{% endif %}">
+                      {{ booking.slot.get_status_display }}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              
+              {% if booking.customer_notes %}
+              <div class="mt-3">
+                <h6>Special Requests</h6>
+                <div class="alert alert-info">
+                  {{ booking.customer_notes }}
+                </div>
+              </div>
+              {% endif %}
+              
+              <div class="mt-3">
+                <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+                <p><strong>Created:</strong> {{ booking.created_at|date:"M d, Y H:i" }}</p>
+                {% if booking.updated_at != booking.created_at %}
+                <p><strong>Last Updated:</strong> {{ booking.updated_at|date:"M d, Y H:i" }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>Actions</h5>
+            </div>
+            <div class="card-body">
+              {% if booking.status == 'pending' %}
+              <a href="{% url 'booking_confirm' booking.pk %}" class="btn btn-success w-100 mb-2" onclick="return confirm('Are you sure you want to confirm this booking?')">
+                <i class="bi bi-check-circle"></i> Confirm Booking
+              </a>
+              {% endif %}
+              
+              {% if booking.status != 'cancelled' %}
+              <a href="{% url 'booking_cancel' booking.pk %}" class="btn btn-danger w-100 mb-2" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                <i class="bi bi-x-circle"></i> Cancel Booking
+              </a>
+              {% endif %}
+              
+              <a href="{% url 'booking_list' %}" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-list"></i> View All Bookings
+              </a>
+            </div>
+          </div>
+          
+          <div class="card mt-3">
+            <div class="card-header">
+              <h5>Slot Management</h5>
+            </div>
+            <div class="card-body">
+              <a href="{% url 'booking_slot_list' %}" class="btn btn-outline-primary w-100 mb-2">
+                <i class="bi bi-calendar"></i> Manage Slots
+              </a>
+              <a href="{% url 'booking_slot_edit' booking.slot.pk %}" class="btn btn-outline-info w-100">
+                <i class="bi bi-pencil"></i> Edit Slot
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

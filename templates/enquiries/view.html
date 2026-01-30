@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Name</label>
+                <p class="form-control-plaintext">{{ enquiry.name }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Email</label>
+                <p class="form-control-plaintext">{{ enquiry.email }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Phone</label>
+                <p class="form-control-plaintext">{{ enquiry.phone|default:'-' }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Subject</label>
+                <p class="form-control-plaintext">{{ enquiry.subject }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Message</label>
+                <p class="form-control-plaintext">{{ enquiry.message }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Source</label>
+                <p class="form-control-plaintext">
+                  <span class="badge bg-{% if enquiry.source == 'web' %}primary{% elif enquiry.source == 'service' %}success{% elif enquiry.source == 'product' %}info{% else %}secondary{% endif %}">
+                    {{ enquiry.source|title }}
+                  </span>
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <p class="form-control-plaintext">
+                  {% if enquiry.is_read %}
+                    <span class="badge bg-success">Read</span>
+                  {% else %}
+                    <span class="badge bg-info">Unread</span>
+                  {% endif %}
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Created At</label>
+                <p class="form-control-plaintext">{{ enquiry.created_at }}</p>
+              </div>
+              
+              <div class="mt-4">
+                <a href="{% url 'dashboard:enquiries_list' %}" class="btn btn-secondary">Back to List</a>
+                <a href="{% url 'dashboard:enquiries_edit' enquiry.pk %}" class="btn btn-primary">Edit</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

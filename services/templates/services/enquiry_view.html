@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <a href="{% url 'service_enquiry_list' %}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'service_enquiry_delete' enquiry.pk %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this enquiry?')">
+              <i class="bi bi-trash"></i> Delete
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Enquiry Details</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <table class="table table-borderless">
+                    <tr>
+                      <th>Service:</th>
+                      <td>{{ enquiry.service.name }}</td>
+                    </tr>
+                    <tr>
+                      <th>Name:</th>
+                      <td>{{ enquiry.name }}</td>
+                    </tr>
+                    <tr>
+                      <th>Email:</th>
+                      <td>{{ enquiry.email }}</td>
+                    </tr>
+                    <tr>
+                      <th>Phone:</th>
+                      <td>{{ enquiry.phone }}</td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="col-md-6">
+                  <table class="table table-borderless">
+                    <tr>
+                      <th>Created:</th>
+                      <td>{{ enquiry.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                      <th>Service Status:</th>
+                      <td>
+                        <span class="badge {% if enquiry.service.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                          {% if enquiry.service.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+              
+              <div class="row mt-4">
+                <div class="col-md-12">
+                  <h6>Message:</h6>
+                  <div class="border p-3 bg-light">
+                    {{ enquiry.message|linebreaks }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

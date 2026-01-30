@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Package Management - Vastu Farms{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <h2>Packages</h2>
+      <p class="text-muted">Manage your package listings</p>
+    </div>
+    <div class="col-md-6 text-end">
+      <a href="{% url 'dashboard:package_add' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add New Package
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for package in packages %}
+            <tr>
+              <td>
+                <strong>{{ package.name }}</strong>
+              </td>
+              <td>{{ package.description|truncatewords:10 }}</td>
+              <td>₹{{ package.price }}</td>
+              <td>
+                <span class="badge bg-{% if package.is_active %}success{% else %}secondary{% endif %}">
+                  {% if package.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </td>
+              <td>{{ package.created_at|date:"M d, Y" }}</td>
+              <td>
+                <a href="{% url 'dashboard:package_view' package.pk %}" class="btn btn-sm btn-outline-info me-1">
+                  <i class="bi bi-eye"></i> View
+                </a>
+                <a href="{% url 'dashboard:package_edit' package.pk %}" class="btn btn-sm btn-outline-primary me-1">
+                  <i class="bi bi-pencil"></i> Edit
+                </a>
+                <a href="{% url 'dashboard:package_delete' package.pk %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this package?')">
+                  <i class="bi bi-trash"></i> Delete
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted">
+                No packages found. <a href="{% url 'dashboard:package_add' %}">Create your first package</a>.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Delete modal handler
+  const deleteModal = document.getElementById('deleteModal');
+  let currentPackageId = null;
+
+  deleteModal.addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    currentPackageId = button.dataset.packageId;
+  });
+
+  document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (currentPackageId) {
+      console.log('Deleting package:', currentPackageId);
+      bootstrap.Modal.getInstance(deleteModal).hide();
+    }
+  });
+
+  // Edit modal handler
+  const editModal = document.getElementById('editModal');
+
+  editModal.addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    document.getElementById('editPackageId').value = button.dataset.packageId;
+    document.getElementById('editName').value = button.dataset.packageName || '';
+    document.getElementById('editPrice').value = button.dataset.packagePrice || '';
+    document.getElementById('editCategory').value = button.dataset.packageCategory || 'basic';
+    document.getElementById('editDescription').value = button.dataset.packageDescription || '';
+    
+    // Set status
+    const status = button.dataset.packageStatus || 'active';
+    document.getElementById('editStatus').value = status;
+  });
+
+  document.getElementById('confirmEdit').addEventListener('click', function() {
+    const packageId = document.getElementById('editPackageId').value;
+    const formData = {
+      id: packageId,
+      name: document.getElementById('editName').value,
+      price: document.getElementById('editPrice').value,
+      category: document.getElementById('editCategory').value,
+      description: document.getElementById('editDescription').value,
+      status: document.getElementById('editStatus').value
+    };
+    console.log('Updating package:', formData);
+    bootstrap.Modal.getInstance(editModal).hide();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+
+{% block title %}Global Settings | Vastu Farms Admin Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Logo Preview Styling */
+.logo-preview, .favicon-preview {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #ced4da;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+body.theme-dark .logo-preview, 
+body.theme-dark .favicon-preview {
+    border-color: #444;
+    background-color: #2d2d2d;
+}
+
+/* Custom Color Picker Style */
+.form-control-color {
+    height: 40px;
+    padding: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Global Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>System Settings</h6>
+                            <form id="systemSettingsForm">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="siteName" class="form-label">Site Name</label>
+                                    <input type="text" class="form-control" id="siteName" value="Vastu Farms Admin Portal">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="siteEmail" class="form-label">Contact Email</label>
+                                    <input type="email" class="form-control" id="siteEmail" value="contact@vastufarms.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="sitePhone" class="form-label">Contact Phone</label>
+                                    <input type="tel" class="form-control" id="sitePhone" value="+1234567890">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="address" rows="3">123 Farm Road, Agricultural District, Green Valley</textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save System Settings</button>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Appearance Settings</h6>
+                            <form id="appearanceSettingsForm">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="theme" class="form-label">Theme</label>
+                                    <select class="form-select" id="theme">
+                                        <option value="light">Light</option>
+                                        <option value="dark">Dark</option>
+                                        <option value="auto">Auto (System)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="logo" class="form-label">Upload Logo</label>
+                                    <input type="file" class="form-control" id="logo" accept="image/*">
+                                    <div class="mt-2 logo-preview" id="logoPreview"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="favicon" class="form-label">Upload Favicon</label>
+                                    <input type="file" class="form-control" id="favicon" accept="image/*">
+                                    <div class="mt-2 favicon-preview" id="faviconPreview"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="brandColor" class="form-label">Primary Brand Color</label>
+                                    <input type="color" class="form-control form-control-color" id="brandColor" value="#0d6efd">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Appearance Settings</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6>Security Settings</h6>
+                            <form id="securitySettingsForm">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
+                                    <input type="number" class="form-control" id="sessionTimeout" value="30">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="maxLoginAttempts" class="form-label">Max Login Attempts</label>
+                                    <input type="number" class="form-control" id="maxLoginAttempts" value="5">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableTwoFactor" checked>
+                                        <label class="form-check-label" for="enableTwoFactor">Enable Two-Factor Authentication</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="requirePasswordReset" checked>
+                                        <label class="form-check-label" for="requirePasswordReset">Require Password Reset on First Login</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Security Settings</button>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Advanced Settings</h6>
+                            <form id="advancedSettingsForm">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="maintenanceMode" class="form-label">Maintenance Mode</label>
+                                    <select class="form-select" id="maintenanceMode">
+                                        <option value="off">Off</option>
+                                        <option value="on">On</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cacheTime" class="form-label">Cache Time (minutes)</label>
+                                    <input type="number" class="form-control" id="cacheTime" value="60">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableAnalytics" checked>
+                                        <label class="form-check-label" for="enableAnalytics">Enable Analytics</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableSeo">
+                                        <label class="form-check-label" for="enableSeo">Enable SEO Features</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Advanced Settings</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6>Custom Settings</h6>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Key</th>
+                                            <th>Value</th>
+                                            <th>Description</th>
+                                            <th>Last Updated</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for setting in settings %}
+                                        <tr>
+                                            <td>{{ setting.key }}</td>
+                                            <td>{{ setting.value|truncatechars:50 }}</td>
+                                            <td>{{ setting.description|truncatechars:50 }}</td>
+                                            <td>{{ setting.updated_at|date:"M d, Y H:i" }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No custom settings yet</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h6>Add New Setting</h6>
+                                <form id="addSettingForm">
+                                    {% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <input type="text" class="form-control" placeholder="Setting Key" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="text" class="form-control" placeholder="Setting Value" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="text" class="form-control" placeholder="Description">
+                                        </div>
+                                        <div class="col-md-1">
+                                            <button type="submit" class="btn btn-success">Add</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Image preview functionality
+document.getElementById('logo').addEventListener('change', function(e) {
+    previewImage(e.target, 'logoPreview');
+});
+
+document.getElementById('favicon').addEventListener('change', function(e) {
+    previewImage(e.target, 'faviconPreview');
+});
+
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    preview.innerHTML = '';
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-thumbnail';
+            img.style.maxWidth = '200px';
+            img.style.maxHeight = '100px';
+            preview.appendChild(img);
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+document.getElementById('systemSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // In a real application, this would make an API call
+    alert('System settings saved successfully!');
+});
+
+document.getElementById('appearanceSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // In a real application, this would make an API call
+    const theme = document.getElementById('theme').value;
+    const brandColor = document.getElementById('brandColor').value;
+    alert(`Appearance settings saved! Theme: ${theme}, Brand Color: ${brandColor}`);
+});
+
+document.getElementById('securitySettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // In a real application, this would make an API call
+    alert('Security settings saved successfully!');
+});
+
+document.getElementById('advancedSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // In a real application, this would make an API call
+    const maintenanceMode = document.getElementById('maintenanceMode').value;
+    const cacheTime = document.getElementById('cacheTime').value;
+    alert(`Advanced settings saved! Maintenance Mode: ${maintenanceMode}, Cache Time: ${cacheTime} minutes`);
+});
+
+document.getElementById('addSettingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // In a real application, this would make an API call
+    alert('New setting added successfully!');
+    this.reset();
+});
+
+// Theme switching functionality
+function applyTheme(theme) {
+    const body = document.body;
+    
+    // Remove existing theme classes
+    body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
+    
+    // Apply new theme globally
+    body.classList.add('theme-' + theme);
+    
+    // Save to localStorage for persistence
+    localStorage.setItem('admin-theme', theme);
+}
+
+document.getElementById('theme').addEventListener('change', function(e) {
+    applyTheme(e.target.value);
+    localStorage.setItem('admin-theme', e.target.value);
+});
+
+// Initialize theme selector
+window.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('admin-theme') || 'light';
+    const themeSelect = document.getElementById('theme');
+    if (themeSelect) {
+        themeSelect.value = savedTheme;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Product - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">{{ page_title }}</h4>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">Warning!</h4>
+            <p>You are about to delete the product: <strong>{{ product.name }}</strong></p>
+            <hr>
+            <p class="mb-0">This action cannot be undone. Are you sure you want to proceed?</p>
+          </div>
+          
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <p><strong>Product Name:</strong> {{ product.name }}</p>
+              <p><strong>Description:</strong> {{ product.description|truncatewords:20 }}</p>
+              <p><strong>Price:</strong> ${{ product.price }}</p>
+              <p><strong>Status:</strong> 
+                <span class="badge bg-{% if product.is_active %}success{% else %}secondary{% endif %}">
+                  {% if product.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </p>
+            </div>
+            
+            <div class="mt-4">
+              <button type="submit" class="btn btn-danger">Yes, Delete Product</button>
+              <a href="{% url 'dashboard:product_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

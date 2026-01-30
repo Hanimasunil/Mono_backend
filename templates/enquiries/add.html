@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            <div class="mb-3">
+              <label for="name" class="form-label">Name *</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ enquiry.name|default:'' }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="email" class="form-label">Email *</label>
+              <input type="email" class="form-control" id="email" name="email" value="{{ enquiry.email|default:'' }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone</label>
+              <input type="tel" class="form-control" id="phone" name="phone" value="{{ enquiry.phone|default:'' }}">
+            </div>
+            
+            <div class="mb-3">
+              <label for="subject" class="form-label">Subject *</label>
+              <input type="text" class="form-control" id="subject" name="subject" value="{{ enquiry.subject|default:'' }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="message" class="form-label">Message *</label>
+              <textarea class="form-control" id="message" name="message" rows="4" required>{{ enquiry.message|default:'' }}</textarea>
+            </div>
+            
+            <div class="mb-3">
+              <label for="source" class="form-label">Source</label>
+              <select class="form-select" id="source" name="source">
+                <option value="web" {% if enquiry.source == 'web' %}selected{% endif %}>Web</option>
+                <option value="service" {% if enquiry.source == 'service' %}selected{% endif %}>Service</option>
+                <option value="product" {% if enquiry.source == 'product' %}selected{% endif %}>Product</option>
+                <option value="other" {% if enquiry.source == 'other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Enquiry</button>
+            <a href="{% url 'dashboard:enquiries_list' %}" class="btn btn-secondary">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

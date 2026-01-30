@@ -1,0 +1,535 @@
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import BookingSlot, Booking
+import json
+from datetime import datetime
+
+
+# Admin Views
+@login_required(login_url='dashboard:admin_login')
+def booking_slot_list(request):
+    """Admin booking slot list view"""
+    slots = BookingSlot.objects.all().order_by('-created_at')
+    context = {
+        'slots': slots,
+        'page_title': 'Booking Slot Management',
+        'page_subtitle': 'Manage booking slots',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/list.html', context)
+
+
+@login_required(login_url='dashboard:admin_login')
+def booking_slot_add(request):
+    """Add new booking slot"""
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        start_time = request.POST.get('start_time')
+        end_time = request.POST.get('end_time')
+        max_bookings = request.POST.get('max_bookings', 1)
+        
+        slot = BookingSlot.objects.create(
+            title=title,
+            description=description,
+            start_time=start_time,
+            end_time=end_time,
+            max_bookings=int(max_bookings)
+        )
+        
+        return redirect('booking_slot_list')
+    
+    context = {
+        'page_title': 'Add Booking Slot',
+        'page_subtitle': 'Create new booking slot',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/add.html', context)
+
+
+@login_required(login_url='dashboard:admin_login')
+def booking_slot_edit(request, pk):
+    """Edit booking slot"""
+    slot = get_object_or_404(BookingSlot, pk=pk)
+    
+    if request.method == 'POST':
+        slot.title = request.POST.get('title')
+        slot.description = request.POST.get('description')
+        slot.start_time = request.POST.get('start_time')
+        slot.end_time = request.POST.get('end_time')
+        slot.max_bookings = int(request.POST.get('max_bookings', 1))
+        slot.status = request.POST.get('status', 'available')
+        
+        slot.save()
+        
+        return redirect('booking_slot_list')
+    
+    context = {
+        'slot': slot,
+        'page_title': f'Edit {slot.title}',
+        'page_subtitle': 'Update booking slot',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/edit.html', context)
+
+
+@login_required(login_url='dashboard:admin_login')
+def booking_list(request):
+    """Admin booking list view"""
+    bookings = Booking.objects.all().order_by('-created_at')
+    context = {
+        'bookings': bookings,
+        'page_title': 'Booking Management',
+        'page_subtitle': 'Manage bookings',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/booking_list.html', context)
+
+
+@login_required(login_url='dashboard:admin_login')
+def booking_view(request, pk):
+    """View booking details"""
+    booking = get_object_or_404(Booking, pk=pk)
+    context = {
+        'booking': booking,
+        'page_title': f'Booking Details: {booking.customer_name}',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/booking_view.html', context)
+
+
+@login_required(login_url='dashboard:admin_login')
+def booking_confirm(request, pk):
+    """Confirm a booking"""
+    booking = get_object_or_404(Booking, pk=pk)
+    
+    if request.method == 'POST':
+        booking.status = 'confirmed'
+        booking.save()
+        
+        # Add success message
+        from django.contrib import messages
+        messages.success(request, f'Booking for {booking.customer_name} has been confirmed successfully.')
+        
+        return redirect('booking_list')
+    
+    context = {
+        'booking': booking,
+        'page_title': f'Confirm Booking: {booking.customer_name}',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/booking_confirm.html', context)
+
+
+@login_required(login_url='dashboard:admin_login')
+def booking_cancel(request, pk):
+    """Cancel a booking"""
+    booking = get_object_or_404(Booking, pk=pk)
+    
+    if request.method == 'POST':
+        # Update booking status
+        booking.status = 'cancelled'
+        booking.save()
+        
+        # Update slot availability
+        slot = booking.slot
+        if slot.current_bookings > 0:
+            slot.current_bookings -= 1
+            if slot.current_bookings < slot.max_bookings:
+                slot.status = 'available'
+            slot.save()
+        
+        # Add success message
+        from django.contrib import messages
+        messages.success(request, f'Booking for {booking.customer_name} has been cancelled successfully.')
+        
+        return redirect('booking_list')
+    
+    context = {
+        'booking': booking,
+        'page_title': f'Cancel Booking: {booking.customer_name}',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/booking_cancel.html', context)
+
+
+@csrf_exempt
+@login_required(login_url='dashboard:admin_login')
+def booking_create(request, slot_pk):
+    """Create booking for a slot"""
+    slot = get_object_or_404(BookingSlot, pk=slot_pk)
+    
+    if request.method == 'POST':
+        customer_name = request.POST.get('customer_name')
+        customer_email = request.POST.get('customer_email')
+        customer_phone = request.POST.get('customer_phone')
+        customer_notes = request.POST.get('customer_notes', '')
+        
+        if customer_name and customer_email and customer_phone:
+            booking = Booking.objects.create(
+                slot=slot,
+                customer_name=customer_name,
+                customer_email=customer_email,
+                customer_phone=customer_phone,
+                customer_notes=customer_notes
+            )
+            
+            # Update slot's current booking count
+            slot.current_bookings += 1
+            if slot.current_bookings >= slot.max_bookings:
+                slot.status = 'booked'
+            slot.save()
+            
+            return redirect('booking_list')
+    
+    context = {
+        'slot': slot,
+        'page_title': f'Book {slot.title}',
+        'page_subtitle': 'Create new booking',
+        'current_page': 'booking-slots'
+    }
+    return render(request, 'admin/bookingslots/booking_create.html', context)
+
+
+# Public Views
+def booking_slot_public_list(request):
+    """Public booking slot list view"""
+    slots = BookingSlot.objects.filter(status='available').order_by('start_time')
+    context = {
+        'slots': slots,
+        'page_title': 'Available Slots',
+        'page_subtitle': 'Book your preferred slot'
+    }
+    return render(request, 'bookingslots/list.html', context)
+
+
+def booking_create(request, slot_pk):
+    """Create a booking for a slot"""
+    slot = get_object_or_404(BookingSlot, pk=slot_pk, status='available')
+    
+    if request.method == 'POST':
+        customer_name = request.POST.get('customer_name')
+        customer_email = request.POST.get('customer_email')
+        customer_phone = request.POST.get('customer_phone')
+        customer_notes = request.POST.get('customer_notes', '')
+        
+        booking = Booking.objects.create(
+            slot=slot,
+            customer_name=customer_name,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            customer_notes=customer_notes
+        )
+        
+        # Update slot's current booking count
+        slot.current_bookings += 1
+        if slot.current_bookings >= slot.max_bookings:
+            slot.status = 'booked'
+        slot.save()
+        
+        return redirect('booking_confirmation', booking_id=booking.id)
+    
+    context = {
+        'slot': slot,
+        'page_title': f'Book Slot: {slot.title}'
+    }
+    return render(request, 'bookingslots/create.html', context)
+
+
+def booking_confirmation(request, booking_id):
+    """Show booking confirmation"""
+    booking = get_object_or_404(Booking, id=booking_id)
+    context = {
+        'booking': booking,
+        'page_title': 'Booking Confirmation'
+    }
+    return render(request, 'bookingslots/confirmation.html', context)
+
+
+# API Views
+@csrf_exempt
+def api_booking_slot_list(request):
+    """GET available booking slots"""
+    if request.method == 'GET':
+        slots = BookingSlot.objects.filter(status='available').order_by('start_time')
+        slot_data = []
+        
+        for slot in slots:
+            slot_data.append({
+                'id': str(slot.id),
+                'title': slot.title,
+                'description': slot.description,
+                'start_time': slot.start_time.isoformat(),
+                'end_time': slot.end_time.isoformat(),
+                'max_bookings': slot.max_bookings,
+                'current_bookings': slot.current_bookings,
+                'is_available': slot.is_available,
+                'created_at': slot.created_at.isoformat()
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'data': slot_data,
+            'count': len(slot_data)
+        })
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def api_create_booking(request):
+    """POST to create a booking"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            slot_id = data.get('slot_id')
+            customer_name = data.get('customer_name')
+            customer_email = data.get('customer_email')
+            customer_phone = data.get('customer_phone')
+
+
+# Complete CRUD API Endpoints
+
+@csrf_exempt
+def api_booking_slot_detail(request, pk):
+    """GET/PUT/DELETE booking slot detail"""
+    if request.method == 'GET':
+        try:
+            slot = get_object_or_404(BookingSlot, pk=pk)
+            serializer = BookingSlotSerializer(slot)
+            return JsonResponse({
+                'success': True,
+                'data': serializer.data
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    elif request.method == 'PUT':
+        try:
+            slot = get_object_or_404(BookingSlot, pk=pk)
+            data = json.loads(request.body)
+            
+            for field, value in data.items():
+                if hasattr(slot, field):
+                    setattr(slot, field, value)
+            
+            slot.save()
+            serializer = BookingSlotSerializer(slot)
+            return JsonResponse({
+                'success': True,
+                'data': serializer.data,
+                'message': 'Booking slot updated successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    elif request.method == 'DELETE':
+        try:
+            slot = get_object_or_404(BookingSlot, pk=pk)
+            slot.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Booking slot deleted successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def api_booking_slot_create(request):
+    """POST to create a booking slot"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            serializer = BookingSlotSerializer(data=data)
+            if serializer.is_valid():
+                slot = serializer.save()
+                return JsonResponse({
+                    'success': True,
+                    'data': BookingSlotSerializer(slot).data,
+                    'message': 'Booking slot created successfully'
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': serializer.errors
+                }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def api_booking_list(request):
+    """GET all bookings or POST to create booking"""
+    if request.method == 'GET':
+        try:
+            bookings = Booking.objects.all().order_by('-created_at')
+            serializer = BookingSerializer(bookings, many=True)
+            return JsonResponse({
+                'success': True,
+                'data': serializer.data,
+                'count': len(serializer.data)
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            serializer = BookingCreateSerializer(data=data)
+            if serializer.is_valid():
+                booking = serializer.save()
+                # Update slot availability
+                slot = booking.slot
+                slot.current_bookings += 1
+                if slot.current_bookings >= slot.max_bookings:
+                    slot.status = 'booked'
+                slot.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'data': BookingSerializer(booking).data,
+                    'message': 'Booking created successfully'
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': serializer.errors
+                }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def api_booking_detail(request, pk):
+    """GET/PUT/DELETE booking detail"""
+    if request.method == 'GET':
+        try:
+            booking = get_object_or_404(Booking, pk=pk)
+            serializer = BookingSerializer(booking)
+            return JsonResponse({
+                'success': True,
+                'data': serializer.data
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    elif request.method == 'PUT':
+        try:
+            booking = get_object_or_404(Booking, pk=pk)
+            data = json.loads(request.body)
+            
+            old_status = booking.status
+            for field, value in data.items():
+                if hasattr(booking, field):
+                    setattr(booking, field, value)
+            
+            booking.save()
+            
+            # Update slot availability if status changed
+            if old_status != booking.status:
+                slot = booking.slot
+                if booking.status == 'cancelled':
+                    if slot.current_bookings > 0:
+                        slot.current_bookings -= 1
+                        if slot.current_bookings < slot.max_bookings:
+                            slot.status = 'available'
+                slot.save()
+            
+            serializer = BookingSerializer(booking)
+            return JsonResponse({
+                'success': True,
+                'data': serializer.data,
+                'message': 'Booking updated successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    elif request.method == 'DELETE':
+        try:
+            booking = get_object_or_404(Booking, pk=pk)
+            # Update slot availability
+            slot = booking.slot
+            if slot.current_bookings > 0:
+                slot.current_bookings -= 1
+                if slot.current_bookings < slot.max_bookings:
+                    slot.status = 'available'
+            slot.save()
+            
+            booking.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Booking deleted successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+
+# Complete CRUD API Endpoints
+            )
+                
+            # Update slot's current booking count
+            slot.current_bookings += 1
+            if slot.current_bookings >= slot.max_bookings:
+                slot.status = 'booked'
+            slot.save()
+                
+            booking_data = {
+                'id': str(booking.id),
+                'slot_id': str(booking.slot.id),
+                'customer_name': booking.customer_name,
+                'customer_email': booking.customer_email,
+                'customer_phone': booking.customer_phone,
+                'status': booking.status,
+                'created_at': booking.created_at.isoformat()
+            }
+                
+            return JsonResponse({
+                'success': True,
+                'data': booking_data
+            })
+                
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+        
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)

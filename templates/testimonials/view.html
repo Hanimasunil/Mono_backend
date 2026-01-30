@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Name</label>
+                <p class="form-control-plaintext">{{ testimonial.name }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Designation</label>
+                <p class="form-control-plaintext">{{ testimonial.designation|default:'-' }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Company</label>
+                <p class="form-control-plaintext">{{ testimonial.company|default:'-' }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Rating</label>
+                <p class="form-control-plaintext">
+                  {% for i in '12345'|make_list %}
+                    {% if forloop.counter <= testimonial.rating %}
+                      <span class="text-warning">★</span>
+                    {% else %}
+                      <span class="text-muted">☆</span>
+                    {% endif %}
+                  {% endfor %}
+                  ({{ testimonial.rating }}/5)
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Message</label>
+                <p class="form-control-plaintext">{{ testimonial.message }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <p class="form-control-plaintext">
+                  {% if testimonial.is_active %}
+                    <span class="badge bg-success">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Created At</label>
+                <p class="form-control-plaintext">{{ testimonial.created_at }}</p>
+              </div>
+              
+              <div class="mt-4">
+                <a href="{% url 'dashboard:testimonials_list' %}" class="btn btn-secondary">Back to List</a>
+                <a href="{% url 'dashboard:testimonials_edit' testimonial.pk %}" class="btn btn-primary">Edit</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

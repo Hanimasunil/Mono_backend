@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - Vastu Farms{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2>{{ page_title }}</h2>
+      <p class="text-muted">{{ page_subtitle }}</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <label for="name" class="form-label">Service Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ service.name }}" required>
+              <div class="form-text">Enter the name of the service</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="5" placeholder="Describe the service...">{{ service.description }}</textarea>
+              <div class="form-text">Provide a detailed description of the service</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="icon" class="form-label">Service Icon</label>
+              <input type="file" class="form-control" id="icon" name="icon" accept="image/*">
+              {% if service.icon %}
+              <div class="mt-2">
+                <p class="text-muted small">Current icon:</p>
+                <img src="{{ service.icon.url }}" alt="{{ service.name }}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">
+              </div>
+              {% endif %}
+            </div>
+            
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if service.is_active %}checked{% endif %}>
+              <label class="form-check-label" for="is_active">Is Active</label>
+              <div class="form-text">Uncheck to hide this service from public view</div>
+            </div>
+            
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i> Update Service
+              </button>
+              <a href="{% url 'dashboard:service_list_admin' %}" class="btn btn-secondary">
+                <i class="bi bi-x"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Service Information</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Service Name:</strong> The name that will appear to users</p>
+          <p><strong>Description:</strong> Detailed information about what the service provides</p>
+          <p><strong>Active Status:</strong> Determines if the service is visible to public users</p>
+          <hr>
+          <p><strong>Created:</strong> {{ service.created_at|date:"M d, Y" }}</p>
+          <p><strong>Last Updated:</strong> {{ service.updated_at|date:"M d, Y" }}</p>
+        </div>
+      </div>
+      
+      <div class="card border-danger mt-3">
+        <div class="card-header bg-danger text-white">
+          <h5 class="card-title mb-0">Danger Zone</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-danger">Deleting this service will remove it permanently.</p>
+          <a href="{% url 'dashboard:service_delete' service.pk %}" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Delete Service
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

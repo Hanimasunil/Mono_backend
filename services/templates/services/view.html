@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">{{ service.name }}</h5>
+              <p class="card-text">{{ service.description|linebreaks }}</p>
+              <p class="card-text">
+                <small class="text-muted">
+                  Status: 
+                  <span class="badge {% if service.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if service.is_active %}Active{% else %}Inactive{% endif %}
+                  </span>
+                </small>
+              </p>
+              <p class="card-text">
+                <small class="text-muted">Created: {{ service.created_at|date:"M d, Y" }}</small>
+              </p>
+              <div class="mt-3">
+                <a href="{% url 'dashboard:service_edit' service.pk %}" class="btn btn-primary">Edit</a>
+                <a href="{% url 'dashboard:service_delete' service.pk %}" class="btn btn-danger">Delete</a>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#enquiryModal">
+                  <i class="bi bi-chat-dots"></i> Enquire
+                </button>
+                <a href="{% url 'dashboard:service_list_admin' %}" class="btn btn-secondary">Back to List</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Enquiry Modal -->
+<div class="modal fade" id="enquiryModal" tabindex="-1" aria-labelledby="enquiryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="enquiryModalLabel">Enquire about {{ service.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="enquiryForm" method="post" action="{% url 'service_enquiry_create' service.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="enquiryName" class="form-label">Name *</label>
+            <input type="text" class="form-control" id="enquiryName" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="enquiryEmail" class="form-label">Email *</label>
+            <input type="email" class="form-control" id="enquiryEmail" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="enquiryPhone" class="form-label">Phone *</label>
+            <input type="tel" class="form-control" id="enquiryPhone" name="phone" required>
+          </div>
+          <div class="mb-3">
+            <label for="enquiryMessage" class="form-label">Message *</label>
+            <textarea class="form-control" id="enquiryMessage" name="message" rows="4" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Submit Enquiry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('enquiryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const serviceId = '{{ service.id }}';
+    
+    fetch('{% url "service_enquiry_create" service.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            alert(data.message);
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('enquiryModal')).hide();
+            // Reset form
+            this.reset();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while submitting your enquiry.');
+    });
+});
+</script>
+{% endblock %}

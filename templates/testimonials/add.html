@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="name" class="form-label">Name *</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ testimonial.name|default:'' }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="designation" class="form-label">Designation</label>
+              <input type="text" class="form-control" id="designation" name="designation" value="{{ testimonial.designation|default:'' }}">
+            </div>
+            
+            <div class="mb-3">
+              <label for="company" class="form-label">Company</label>
+              <input type="text" class="form-control" id="company" name="company" value="{{ testimonial.company|default:'' }}">
+            </div>
+            
+            <div class="mb-3">
+              <label for="rating" class="form-label">Rating</label>
+              <select class="form-select" id="rating" name="rating">
+                <option value="5" {% if testimonial.rating == 5 %}selected{% endif %}>5 Stars</option>
+                <option value="4" {% if testimonial.rating == 4 %}selected{% endif %}>4 Stars</option>
+                <option value="3" {% if testimonial.rating == 3 %}selected{% endif %}>3 Stars</option>
+                <option value="2" {% if testimonial.rating == 2 %}selected{% endif %}>2 Stars</option>
+                <option value="1" {% if testimonial.rating == 1 %}selected{% endif %}>1 Star</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="message" class="form-label">Message *</label>
+              <textarea class="form-control" id="message" name="message" rows="4" required>{{ testimonial.message|default:'' }}</textarea>
+            </div>
+            
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="True" {% if testimonial.is_active %}checked{% endif %}>
+              <label class="form-check-label" for="is_active">Active</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Testimonial</button>
+            <a href="{% url 'dashboard:testimonials_list' %}" class="btn btn-secondary">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

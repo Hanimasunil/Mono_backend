@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if client %}Edit {{ client.name }}{% else %}Add Client{% endif %} - Vastu Farms{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2>{% if client %}Edit {{ client.name }}{% else %}Add New Client{% endif %}</h2>
+      <p class="text-muted">{% if client %}Update client details{% else %}Register a new client{% endif %}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-8">
+            <div class="mb-3">
+              <label for="name" class="form-label">Name *</label>
+              <input type="text" class="form-control" id="name" name="name" value="{{ client.name|default:'' }}" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="website" class="form-label">Website</label>
+              <input type="url" class="form-control" id="website" name="website" value="{{ client.website|default:'' }}" placeholder="https://example.com">
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="is_active" class="form-label">Status</label>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="on" {% if client.is_active %}checked{% endif %}>
+                <label class="form-check-label" for="is_active">
+                  Active
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="logo" class="form-label">Logo</label>
+              <input type="file" class="form-control" id="logo" name="logo">
+              {% if client and client.logo %}
+                <div class="mt-2">
+                  <p class="text-muted small">Current logo:</p>
+                  <img src="{{ client.logo.url }}" alt="{{ client.name }}" class="img-thumbnail" style="max-width: 150px;">
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'dashboard:client_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> {% if client %}Update Client{% else %}Save Client{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const mediaInput = document.getElementById('mediaInput');
+  const mediaPreview = document.getElementById('mediaPreview');
+  const uploadBox = document.getElementById('uploadBox');
+  let uploadedFile = null;
+
+  mediaInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setPreview(file);
+    }
+  });
+
+  function setPreview(file) {
+    uploadedFile = file;
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      mediaPreview.innerHTML = `
+        <div class="media-preview-item">
+          <img src="${e.target.result}" alt="${file.name}">
+          <button type="button" class="media-remove-btn" onclick="removeMedia()">
+            <i class="bi bi-trash3"></i>
+          </button>
+          <span class="media-filename">${file.name}</span>
+        </div>
+      `;
+      uploadBox.style.display = 'none';
+    };
+    
+    reader.readAsDataURL(file);
+  }
+
+  function removeMedia() {
+    mediaPreview.innerHTML = '';
+    uploadedFile = null;
+    mediaInput.value = '';
+    uploadBox.style.display = 'flex';
+  }
+
+  // Drag and drop support
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadBox.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    uploadBox.addEventListener(eventName, () => uploadBox.classList.add('drag-over'), false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    uploadBox.addEventListener(eventName, () => uploadBox.classList.remove('drag-over'), false);
+  });
+
+  uploadBox.addEventListener('drop', function(e) {
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setPreview(file);
+    }
+  });
+</script>
+{% endblock %}

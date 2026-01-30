@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="title" class="form-label">Title *</label>
+              <input type="text" class="form-control" id="title" name="title" value="{{ slot.title }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="4">{{ slot.description }}</textarea>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="start_time" class="form-label">Start Date & Time *</label>
+                  <input type="datetime-local" class="form-control" id="start_time" name="start_time" value="{{ slot.start_time|date:'Y-m-d\TH:i' }}" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="end_time" class="form-label">End Date & Time *</label>
+                  <input type="datetime-local" class="form-control" id="end_time" name="end_time" value="{{ slot.end_time|date:'Y-m-d\TH:i' }}" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="max_bookings" class="form-label">Maximum Bookings *</label>
+                  <input type="number" class="form-control" id="max_bookings" name="max_bookings" value="{{ slot.max_bookings }}" min="1" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="status" class="form-label">Status *</label>
+                  <select class="form-control" id="status" name="status" required>
+                    <option value="available" {% if slot.status == 'available' %}selected{% endif %}>Available</option>
+                    <option value="booked" {% if slot.status == 'booked' %}selected{% endif %}>Booked</option>
+                    <option value="cancelled" {% if slot.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="completed" {% if slot.status == 'completed' %}selected{% endif %}>Completed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Update Booking Slot</button>
+            <a href="{% url 'booking_slot_list' %}" class="btn btn-secondary">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

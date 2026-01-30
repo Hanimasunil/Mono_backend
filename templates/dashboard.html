@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Vastu Farms Admin Portal{% endblock %}
+
+{% block content %}
+<!-- MAIN CONTENT -->
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <h1 class="mb-4">{{ page_title }}</h1>
+        
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card text-white bg-primary">
+              <div class="card-body">
+                <h5 class="card-title">Total Plots</h5>
+                <h3 id="plot-count">0</h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-white bg-success">
+              <div class="card-body">
+                <h5 class="card-title">Total Leads</h5>
+                <h3 id="lead-count">0</h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-white bg-info">
+              <div class="card-body">
+                <h5 class="card-title">Payments</h5>
+                <h3 id="payment-count">₹0L</h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-white bg-warning">
+              <div class="card-body">
+                <h5 class="card-title">Enquiries</h5>
+                <h3 id="enquiry-count">0</h3>
+                <small id="unread-enquiry-count">0 unread</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <h5>Monthly Sales</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="salesChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                <h5>Plot Status</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="plotStatusChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5>Recent Activity</h5>
+              </div>
+              <div class="card-body">
+                <div class="activity-feed">
+                  <div class="activity-item">
+                    <div class="activity-icon bg-success">
+                      <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="activity-content">
+                      <h5>New Lead Generated</h5>
+                      <p>From: john.doe@example.com</p>
+                      <small class="text-muted">2 hours ago</small>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon bg-primary">
+                      <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="activity-content">
+                      <h5>Payment Received</h5>
+                      <p>Amount: ₹25,00,000</p>
+                      <small class="text-muted">1 day ago</small>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon bg-warning">
+                      <i class="bi bi-envelope-check"></i>
+                    </div>
+                    <div class="activity-content">
+                      <h5>New Enquiry</h5>
+                      <p>From: vijay@example.com | Subject: Plot Availability</p>
+                      <small class="text-muted">2 days ago</small>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon bg-secondary">
+                      <i class="bi bi-file-post"></i>
+                    </div>
+                    <div class="activity-content">
+                      <h5>New Blog Published</h5>
+                      <p>Title: "Benefits of Investing in Agricultural Land"</p>
+                      <small class="text-muted">3 days ago</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Testimonials Section -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5>Recent Testimonials</h5>
+              </div>
+              <div class="card-body">
+                <div id="testimonials-container">
+                  <p class="text-muted">Loading testimonials...</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Recent Blogs Section -->
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5>Recent Blog Posts</h5>
+              </div>
+              <div class="card-body">
+                <div id="blogs-container">
+                  <p class="text-muted">Loading blog posts...</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Recent Services Section -->
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5>Our Services</h5>
+              </div>
+              <div class="card-body">
+                <div id="services-container">
+                  <p class="text-muted">Loading services...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Fetch testimonials
+  fetch('/admin/api/v1/testimonials/')
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById('testimonials-container');
+      if (data.success && data.data.length > 0) {
+        let testimonialsHTML = '';
+        
+        data.data.slice(0, 3).forEach(testimonial => {
+          testimonialsHTML += `
+          <div class="testimonial-card">
+            <div class="testimonial-header">
+              <div class="testimonial-user">
+                <strong>${testimonial.name}</strong>
+                <small class="text-muted">${testimonial.designation || testimonial.company || 'Client'}</small>
+              </div>
+              <div class="testimonial-rating">
+                ${'★'.repeat(testimonial.rating)}${'☆'.repeat(5 - testimonial.rating)}
+              </div>
+            </div>
+            <p class="testimonial-message">${testimonial.short_message || testimonial.message.substring(0, 100) + '...'}</p>
+            <small class="text-muted">${new Date(testimonial.created_at).toLocaleDateString()}</small>
+            <div class="testimonial-actions mt-2">
+              <a href="/admin/testimonials/edit/${testimonial.id}/" class="btn btn-sm btn-outline-primary">Edit</a>
+              <a href="#" onclick="deleteTestimonial('${testimonial.id}')" class="btn btn-sm btn-outline-danger">Delete</a>
+            </div>
+          </div>
+          `;
+        });
+        
+        container.innerHTML = testimonialsHTML;
+      } else {
+        container.innerHTML = '<p class="text-muted">No testimonials yet</p>';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching testimonials:', error);
+      document.getElementById('testimonials-container').innerHTML = '<p class="text-muted">Failed to load testimonials</p>';
+    });
+    
+  // Fetch dashboard stats
+  fetch('/admin/api/v1/dashboard/stats/')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const stats = data.data;
+        
+        // Update stats
+        document.getElementById('plot-count').textContent = stats.plots || 0;
+        document.getElementById('lead-count').textContent = stats.leads || 0;
+        document.getElementById('payment-count').textContent = `₹${stats.payments || '0'}L`;
+        document.getElementById('enquiry-count').textContent = stats.enquiries || 0;
+        document.getElementById('unread-enquiry-count').textContent = stats.unread_enquiries || 0;
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching dashboard stats:', error);
+    });
+  
+  // Fetch recent blogs
+  fetch('/blog/api/blog/')
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById('blogs-container');
+      if (data.success && data.data.length > 0) {
+        let blogsHTML = '';
+        
+        data.data.slice(0, 3).forEach(blog => {
+          blogsHTML += `
+          <div class="blog-card mb-3">
+            <h6>\${blog.title}</h6>
+            <p class="text-muted mb-1">\${blog.short_description.substring(0, 80)}...</p>
+            <small class="text-muted">\${new Date(blog.created_at).toLocaleDateString()}</small>
+            <div class="mt-2">
+              <a href="/blog/\${blog.slug}/" class="btn btn-sm btn-outline-primary">Read More</a>
+            </div>
+          </div>
+          `;
+        });
+        
+        container.innerHTML = blogsHTML;
+      } else {
+        container.innerHTML = '<p class="text-muted">No blog posts yet</p>';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching blogs:', error);
+      document.getElementById('blogs-container').innerHTML = '<p class="text-muted">Failed to load blog posts</p>';
+    });
+  
+  // Fetch services
+  fetch('/services/api/services/')
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById('services-container');
+      if (data.success && data.data.length > 0) {
+        let servicesHTML = '';
+        
+        data.data.slice(0, 3).forEach(service => {
+          servicesHTML += `
+          <div class="service-card mb-3">
+            <h6>\${service.name}</h6>
+            <p class="text-muted mb-1">\${service.description.substring(0, 80)}...</p>
+            <div class="mt-2">
+              <a href="/services/services/\${service.slug}/" class="btn btn-sm btn-outline-primary">Learn More</a>
+            </div>
+          </div>
+          `;
+        });
+        
+        container.innerHTML = servicesHTML;
+      } else {
+        container.innerHTML = '<p class="text-muted">No services available</p>';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching services:', error);
+      document.getElementById('services-container').innerHTML = '<p class="text-muted">Failed to load services</p>';
+    });
+  
+  // Delete testimonial function
+  window.deleteTestimonial = function(id) {
+    if (confirm('Are you sure you want to delete this testimonial?')) {
+      fetch(`/admin/api/v1/testimonials/${id}/delete/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          location.reload(); // Refresh page to show updated list
+        } else {
+          alert('Failed to delete testimonial');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting testimonial');
+      });
+    }
+  };
+  
+  // Delete enquiry function
+  window.deleteEnquiry = function(id) {
+    if (confirm('Are you sure you want to delete this enquiry?')) {
+      fetch(`/admin/api/v1/enquiries/${id}/delete/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          location.reload(); // Refresh page to show updated list
+        } else {
+          alert('Failed to delete enquiry');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting enquiry');
+      });
+    }
+  };
+  
+  // Helper function to get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+  }
+});
+</script>
+{% endblock %}

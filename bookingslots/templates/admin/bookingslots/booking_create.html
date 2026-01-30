@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5>Slot Details</h5>
+            </div>
+            <div class="card-body">
+              <p><strong>Title:</strong> {{ slot.title }}</p>
+              <p><strong>Description:</strong> {{ slot.description }}</p>
+              <p><strong>Date:</strong> {{ slot.start_time|date:"M d, Y" }}</p>
+              <p><strong>Time:</strong> {{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</p>
+              <p><strong>Availability:</strong> {{ slot.current_bookings }}/{{ slot.max_bookings }} booked</p>
+              <p><strong>Status:</strong> 
+                <span class="badge bg-{% if slot.status == 'available' %}success{% elif slot.status == 'booked' %}warning{% else %}secondary{% endif %}">
+                  {{ slot.get_status_display }}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>Customer Information</h5>
+            </div>
+            <div class="card-body">
+              <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="customer_name" class="form-label">Full Name *</label>
+                  <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="customer_email" class="form-label">Email *</label>
+                  <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="customer_phone" class="form-label">Phone *</label>
+                  <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="customer_notes" class="form-label">Notes</label>
+                  <textarea class="form-control" id="customer_notes" name="customer_notes" rows="4"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Create Booking</button>
+                <a href="{% url 'booking_slot_list' %}" class="btn btn-secondary">Cancel</a>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

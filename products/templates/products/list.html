@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Product Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <h2>Products</h2>
+      <p class="text-muted">Manage your products</p>
+    </div>
+    <div class="col-md-6 text-end">
+      <a href="{% url 'dashboard:product_add' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add New Product
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td>
+                <strong>{{ product.name }}</strong>
+                <br>
+                <small class="text-muted">{{ product.description|truncatewords:10 }}</small>
+              </td>
+              <td>${{ product.price }}</td>
+              <td>
+                <span class="badge bg-{% if product.is_active %}success{% else %}secondary{% endif %}">
+                  {% if product.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </td>
+              <td>{{ product.created_at|date:"M d, Y" }}</td>
+              <td>
+                <a href="{% url 'dashboard:product_view' product.slug %}" class="btn btn-sm btn-outline-info me-1">
+                  <i class="bi bi-eye"></i> View
+                </a>
+                <a href="{% url 'dashboard:product_edit' product.slug %}" class="btn btn-sm btn-outline-primary me-1">
+                  <i class="bi bi-pencil"></i> Edit
+                </a>
+                <a href="{% url 'dashboard:product_delete' product.slug %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this product?')">
+                  <i class="bi bi-trash"></i> Delete
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted">
+                No products found. <a href="{% url 'dashboard:product_add' %}">Create your first product</a>.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

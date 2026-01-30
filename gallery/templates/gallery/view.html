@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ gallery_item.title|default:"Gallery Item" }} - Vastu Farms{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ gallery_item.title }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              <div class="text-center mb-4">
+                <img src="{{ gallery_item.image.url }}" alt="{{ gallery_item.title }}" class="img-fluid rounded" style="max-height: 400px; object-fit: contain;">
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Title</label>
+                <p class="form-control-plaintext">{{ gallery_item.title }}</p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Category</label>
+                <p class="form-control-plaintext">
+                  <span class="badge bg-primary">{{ gallery_item.category }}</span>
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <p class="form-control-plaintext">
+                  {% if gallery_item.is_active %}
+                    <span class="badge bg-success">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Created At</label>
+                <p class="form-control-plaintext">{{ gallery_item.created_at }}</p>
+              </div>
+              
+              <div class="mt-4">
+                <a href="{% url 'gallery_list' %}" class="btn btn-secondary">Back to List</a>
+                <a href="{% url 'gallery_edit' gallery_item.pk %}" class="btn btn-primary">Edit</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

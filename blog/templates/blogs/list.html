@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Blog Posts - Vastu Farms{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2>Our Blog</h2>
+      <p class="text-muted">Latest articles and insights</p>
+    </div>
+  </div>
+
+  <div class="row">
+    {% for blog in blogs %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        {% if blog.cover_image %}
+        <img src="{{ blog.cover_image.url }}" class="card-img-top" alt="{{ blog.title }}">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ blog.title }}</h5>
+          <p class="card-text">{{ blog.short_description|truncatewords:20 }}</p>
+          <a href="{% url 'blog_detail' blog.slug %}" class="btn btn-primary">Read More</a>
+        </div>
+        <div class="card-footer text-muted">
+          Published: {{ blog.created_at|date:"M d, Y" }}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="text-center">
+        <p class="text-muted">No blog posts available at the moment.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

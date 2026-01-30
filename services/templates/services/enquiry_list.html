@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <main class="col-md-12">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ page_title }}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group me-2">
+            <a href="{% url 'dashboard:service_list_admin' %}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-list"></i> Back to Services
+            </a>
+          </div>
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+              <i class="bi bi-download"></i> Export
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">CSV</a></li>
+              <li><a class="dropdown-item" href="#">Excel</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Service enquiries are created when visitors submit forms on the public service pages.
+            <a href="{% url 'dashboard:service_list_admin' %}" class="alert-link">Go to Services</a> to view public service pages.
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="table-responsive">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Message</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for enquiry in enquiries %}
+                <tr>
+                  <td>{{ enquiry.service.name }}</td>
+                  <td>{{ enquiry.name }}</td>
+                  <td>{{ enquiry.email }}</td>
+                  <td>{{ enquiry.phone }}</td>
+                  <td>{{ enquiry.message|truncatewords:10 }}</td>
+                  <td>{{ enquiry.created_at|date:"M d, Y H:i" }}</td>
+                  <td>
+                    <a href="{% url 'service_enquiry_view' enquiry.pk %}" class="btn btn-sm btn-outline-info">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                    <a href="{% url 'service_enquiry_delete' enquiry.pk %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this enquiry?')">
+                      <i class="bi bi-trash"></i> Delete
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center">No service enquiries found.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
