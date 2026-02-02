@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Client
 from .serializers import ClientSerializer
+import json
 
 
 @login_required(login_url='dashboard:admin_login')
@@ -20,54 +21,55 @@ def client_list(request):
     return render(request, 'client/list.html', context)
 
 
-@login_required(login_url='dashboard:admin_login')
+@csrf_exempt
 def client_add(request):
-    """Add a new client"""
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        website = request.POST.get('website', '')
-        is_active = request.POST.get('is_active') == 'on'
-        
-        # Handle logo upload
-        logo = request.FILES.get('logo')
-        
-        client = Client.objects.create(
-            name=name,
-            website=website,
-            logo=logo,
-            is_active=is_active
-        )
-        
-        messages.success(request, f'Client "{name}" has been added successfully.')
-        return redirect('dashboard:client_list')
-    
-    context = {
-        'page_title': 'Add Client',
-        'page_subtitle': 'Register a new client',
-        'current_page': 'clients',
-    }
-    return render(request, 'client/add.html', context)
+    if request.method == "POST":
+        try:
+            name = request.POST.get("name")
+            website = request.POST.get("website", "")
+            is_active = request.POST.get("is_active", "true")
+            logo = request.FILES.get("logo")
+
+            client = Client.objects.create(
+                name=name,
+                website=website,
+                is_active=True if is_active.lower() == "true" else False,
+                logo=logo
+            )
+
+            return JsonResponse({
+                "success": True,
+                "id": str(client.id),
+                "name": client.name
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                "success": False,
+                "error": str(e)
+            }, status=400)
+
+    return JsonResponse({"error": "Only POST allowed"}, status=405)
 
 
 @login_required(login_url='dashboard:admin_login')
 def client_edit(request, pk):
     """Edit a client"""
     client = get_object_or_404(Client, pk=pk)
-    
+
     if request.method == 'POST':
         client.name = request.POST.get('name')
         client.website = request.POST.get('website', '')
         client.is_active = request.POST.get('is_active') == 'on'
-        
-        # Handle logo upload
+
         if 'logo' in request.FILES:
             client.logo = request.FILES.get('logo')
-        
+
         client.save()
-        
+
         messages.success(request, f'Client "{client.name}" has been updated successfully.')
         return redirect('dashboard:client_list')
-    
+
     context = {
         'client': client,
         'page_title': f'Edit {client.name}',
@@ -81,7 +83,7 @@ def client_edit(request, pk):
 def client_view(request, pk):
     """View client details"""
     client = get_object_or_404(Client, pk=pk)
-    
+
     context = {
         'client': client,
         'page_title': f'View {client.name}',
@@ -95,13 +97,13 @@ def client_view(request, pk):
 def client_delete(request, pk):
     """Delete a client"""
     client = get_object_or_404(Client, pk=pk)
-    
+
     if request.method == 'POST':
         client_name = client.name
         client.delete()
         messages.success(request, f'Client "{client_name}" has been deleted successfully.')
         return redirect('dashboard:client_list')
-    
+
     context = {
         'client': client,
         'page_title': f'Delete {client.name}',
@@ -118,7 +120,7 @@ def api_client_list(request):
     if request.method == 'GET':
         clients = Client.objects.filter(is_active=True).order_by('-created_at')
         client_data = []
-        
+
         for item in clients:
             client_data.append({
                 'id': str(item.id),
@@ -128,13 +130,13 @@ def api_client_list(request):
                 'is_active': item.is_active,
                 'created_at': item.created_at.isoformat()
             })
-        
+
         return JsonResponse({
             'success': True,
             'data': client_data,
             'count': len(client_data)
         })
-    
+
     return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
 
@@ -144,7 +146,7 @@ def api_client_detail(request, pk):
     if request.method == 'GET':
         try:
             client = get_object_or_404(Client, pk=pk, is_active=True)
-            
+
             client_data = {
                 'id': str(client.id),
                 'name': client.name,
@@ -153,7 +155,7 @@ def api_client_detail(request, pk):
                 'is_active': client.is_active,
                 'created_at': client.created_at.isoformat()
             }
-            
+
             return JsonResponse({
                 'success': True,
                 'data': client_data
@@ -163,7 +165,7 @@ def api_client_detail(request, pk):
                 'success': False,
                 'error': 'Client not found'
             }, status=404)
-    
+
     return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
 
@@ -172,26 +174,53 @@ def api_client_create(request):
     """POST to create client"""
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            serializer = ClientSerializer(data=data)
-            if serializer.is_valid():
-                client = serializer.save()
+            # Handle both JSON and multipart form data
+            if request.content_type.startswith('application/json'):
+                data = json.loads(request.body)
+                # Create a client without saving to handle file uploads separately
+                client = Client(
+                    name=data.get('name', ''),
+                    website=data.get('website', ''),
+                    is_active=data.get('is_active', True)
+                )
+                # Note: Logo upload not supported with JSON data
+                client.save()
+                
                 return JsonResponse({
                     'success': True,
                     'data': ClientSerializer(client).data,
                     'message': 'Client created successfully'
                 })
             else:
+                # Handle multipart form data (file uploads)
+                name = request.POST.get('name')
+                website = request.POST.get('website', '')
+                is_active = request.POST.get('is_active', 'true').lower() == 'true'
+                logo = request.FILES.get('logo')
+                
+                client = Client.objects.create(
+                    name=name,
+                    website=website,
+                    is_active=is_active,
+                    logo=logo
+                )
+                
                 return JsonResponse({
-                    'success': False,
-                    'error': serializer.errors
-                }, status=400)
+                    'success': True,
+                    'data': ClientSerializer(client).data,
+                    'message': 'Client created successfully'
+                })
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON data'
+            }, status=400)
         except Exception as e:
             return JsonResponse({
                 'success': False,
                 'error': str(e)
             }, status=400)
-    
+
     return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
 
@@ -220,7 +249,7 @@ def api_client_update(request, pk):
                 'success': False,
                 'error': str(e)
             }, status=400)
-    
+
     return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
 
@@ -240,5 +269,5 @@ def api_client_delete(request, pk):
                 'success': False,
                 'error': str(e)
             }, status=400)
-    
+
     return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)

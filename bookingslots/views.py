@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import BookingSlot, Booking
+from .serializers import BookingSlotSerializer, BookingSerializer
 import json
 from datetime import datetime
 
@@ -289,9 +290,18 @@ def api_create_booking(request):
             customer_email = data.get('customer_email')
             customer_phone = data.get('customer_phone')
             customer_notes = data.get('customer_notes', '')
-
+            
+            if not slot_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Slot ID is required'
+                }, status=400)
+            
+            # Get the slot object
+            slot = get_object_or_404(BookingSlot, id=slot_id)
+            
             booking = Booking.objects.create(
-                slot_id=slot_id,
+                slot=slot,
                 customer_name=customer_name,
                 customer_email=customer_email,
                 customer_phone=customer_phone,

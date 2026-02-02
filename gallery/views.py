@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Gallery
 from .serializers import GallerySerializer
-
+import json
 
 @login_required(login_url='dashboard:admin_login')
 def gallery_list(request):
@@ -172,20 +172,47 @@ def api_gallery_create(request):
     """POST to create gallery item"""
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            serializer = GallerySerializer(data=data)
-            if serializer.is_valid():
-                gallery_item = serializer.save()
+            # Handle both JSON and multipart form data
+            if request.content_type.startswith('application/json'):
+                data = json.loads(request.body)
+                # Create a gallery item without saving to handle file uploads separately
+                gallery_item = Gallery(
+                    title=data.get('title', ''),
+                    category=data.get('category', ''),
+                    is_active=data.get('is_active', True)
+                )
+                # Note: Image upload not supported with JSON data
+                gallery_item.save()
+                
                 return JsonResponse({
                     'success': True,
                     'data': GallerySerializer(gallery_item).data,
                     'message': 'Gallery item created successfully'
                 })
             else:
+                # Handle multipart form data (file uploads)
+                title = request.POST.get('title')
+                category = request.POST.get('category', '')
+                is_active = request.POST.get('is_active', 'true').lower() == 'true'
+                image = request.FILES.get('image')
+                
+                gallery_item = Gallery.objects.create(
+                    title=title,
+                    category=category,
+                    is_active=is_active,
+                    image=image
+                )
+                
                 return JsonResponse({
-                    'success': False,
-                    'error': serializer.errors
-                }, status=400)
+                    'success': True,
+                    'data': GallerySerializer(gallery_item).data,
+                    'message': 'Gallery item created successfully'
+                })
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON data'
+            }, status=400)
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -201,20 +228,48 @@ def api_gallery_update(request, pk):
     if request.method == 'PUT':
         try:
             gallery_item = get_object_or_404(Gallery, pk=pk)
-            data = json.loads(request.body)
-            serializer = GallerySerializer(gallery_item, data=data, partial=True)
-            if serializer.is_valid():
-                gallery_item = serializer.save()
+            
+            # Handle both JSON and multipart form data
+            if request.content_type.startswith('application/json'):
+                data = json.loads(request.body)
+                serializer = GallerySerializer(gallery_item, data=data, partial=True)
+                if serializer.is_valid():
+                    gallery_item = serializer.save()
+                    return JsonResponse({
+                        'success': True,
+                        'data': GallerySerializer(gallery_item).data,
+                        'message': 'Gallery item updated successfully'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': serializer.errors
+                    }, status=400)
+            else:
+                # Handle multipart form data (file uploads)
+                title = request.POST.get('title', gallery_item.title)
+                category = request.POST.get('category', gallery_item.category)
+                is_active = request.POST.get('is_active', '').lower() == 'true' if request.POST.get('is_active') else gallery_item.is_active
+                
+                # Handle image upload if provided
+                if 'image' in request.FILES:
+                    gallery_item.image = request.FILES.get('image')
+                
+                gallery_item.title = title
+                gallery_item.category = category
+                gallery_item.is_active = is_active
+                gallery_item.save()
+                
                 return JsonResponse({
                     'success': True,
                     'data': GallerySerializer(gallery_item).data,
                     'message': 'Gallery item updated successfully'
                 })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'error': serializer.errors
-                }, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON data'
+            }, status=400)
         except Exception as e:
             return JsonResponse({
                 'success': False,

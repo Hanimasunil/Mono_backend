@@ -197,20 +197,61 @@ def api_package_create(request):
     """POST to create package"""
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            serializer = PackageSerializer(data=data)
-            if serializer.is_valid():
-                package = serializer.save()
+            # Handle both JSON and multipart form data
+            if request.content_type.startswith('application/json'):
+                data = json.loads(request.body)
+                serializer = PackageSerializer(data=data)
+                if serializer.is_valid():
+                    package = serializer.save()
+                    return JsonResponse({
+                        'success': True,
+                        'data': PackageSerializer(package).data,
+                        'message': 'Package created successfully'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': serializer.errors
+                    }, status=400)
+            else:
+                # Handle multipart form data
+                name = request.POST.get('name')
+                description = request.POST.get('description')
+                price = request.POST.get('price')
+                features = request.POST.get('features', '[]')
+                is_active = request.POST.get('is_active', 'true').lower() == 'true'
+                
+                # Validate required fields
+                if not name or not description or not price:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Name, description, and price are required'
+                    }, status=400)
+                
+                # Handle features JSON string
+                try:
+                    features_list = json.loads(features) if features else []
+                except json.JSONDecodeError:
+                    features_list = []
+                
+                package = Package.objects.create(
+                    name=name,
+                    description=description,
+                    price=price,
+                    features=json.dumps(features_list),  # Store as JSON string
+                    is_active=is_active
+                )
+                
                 return JsonResponse({
                     'success': True,
                     'data': PackageSerializer(package).data,
                     'message': 'Package created successfully'
                 })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'error': serializer.errors
-                }, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON data'
+            }, status=400)
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -226,20 +267,56 @@ def api_package_update(request, pk):
     if request.method == 'PUT':
         try:
             package = get_object_or_404(Package, pk=pk)
-            data = json.loads(request.body)
-            serializer = PackageSerializer(package, data=data, partial=True)
-            if serializer.is_valid():
-                package = serializer.save()
+            
+            # Handle both JSON and multipart form data
+            if request.content_type.startswith('application/json'):
+                data = json.loads(request.body)
+                serializer = PackageSerializer(package, data=data, partial=True)
+                if serializer.is_valid():
+                    package = serializer.save()
+                    return JsonResponse({
+                        'success': True,
+                        'data': PackageSerializer(package).data,
+                        'message': 'Package updated successfully'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': serializer.errors
+                    }, status=400)
+            else:
+                # Handle multipart form data
+                name = request.POST.get('name', package.name)
+                description = request.POST.get('description', package.description)
+                price = request.POST.get('price', package.price)
+                features = request.POST.get('features', package.features)
+                is_active = request.POST.get('is_active', '').lower() == 'true'
+                
+                # Handle features JSON string
+                try:
+                    features_list = json.loads(features) if features else []
+                except json.JSONDecodeError:
+                    features_list = json.loads(package.features) if package.features else []
+                
+                package.name = name
+                package.description = description
+                package.price = price
+                package.features = json.dumps(features_list)  # Store as JSON string
+                if request.POST.get('is_active') is not None:  # Only update if provided
+                    package.is_active = is_active
+                
+                package.save()
+                
                 return JsonResponse({
                     'success': True,
                     'data': PackageSerializer(package).data,
                     'message': 'Package updated successfully'
                 })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'error': serializer.errors
-                }, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON data'
+            }, status=400)
         except Exception as e:
             return JsonResponse({
                 'success': False,
